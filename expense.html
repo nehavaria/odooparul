@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Traveloop - Expense Invoice</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .pie{width:110px;height:110px;border-radius:50%;margin:0 auto 14px;transition:background .5s;}
+    @media print{.no-print{display:none!important;}}
+  </style>
+</head>
+<body>
+<nav class="navbar no-print">
+  <span class="logo">✈️ Traveloop</span>
+  <div class="nav-links">
+    <input type="text" id="searchInput" placeholder="Search Invoices..." style="padding:6px 12px;border:1px solid #ccc;border-radius:6px;font-size:13px;width:180px;" oninput="filterRows()">
+    <select style="padding:6px 12px;border:1px solid #ccc;border-radius:6px;font-size:13px;"><option>Filter</option></select>
+    <select style="padding:6px 12px;border:1px solid #ccc;border-radius:6px;font-size:13px;"><option>Sort #</option></select>
+  </div>
+</nav>
+
+<div class="page-wide">
+  <p style="font-size:13px;margin-bottom:18px;" class="no-print">
+    <a href="my-trips.html" style="color:#2563eb;">← back to My Trips</a>
+  </p>
+
+  <div style="display:flex;gap:20px;align-items:flex-start;">
+    <!-- Invoice -->
+    <div class="card" style="flex:1;">
+      <!-- Header -->
+      <div style="display:flex;gap:18px;margin-bottom:20px;align-items:flex-start;">
+        <div id="invImg" style="width:80px;height:80px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;overflow:hidden;">✈️</div>
+        <div style="flex:1;font-size:13px;color:#555;line-height:2;">
+          <strong style="font-size:16px;color:#1e40af;" id="invTripName">Trip to Europe Adventure</strong><br>
+          Invoice Id: <strong id="invId">INV-00001</strong> &nbsp;|&nbsp; TAX no: <strong>80345</strong><br>
+          Generated: <strong id="invDate"></strong><br>
+          Finance Activity: Flights | Hotel | Food | City | Utilities<br>
+          Payment Status — <span class="badge badge-yellow" id="payStatus">pending</span>
+        </div>
+      </div>
+
+      <div id="msg" class="alert"></div>
+
+      <!-- Table -->
+      <table id="expenseTable">
+        <thead>
+          <tr><th>#</th><th>Category</th><th>Description</th><th>Qty</th><th>Unit Cost ($)</th><th>Amount ($)</th><th class="no-print"></th></tr>
+        </thead>
+        <tbody id="expenseBody"></tbody>
+        <tfoot>
+          <tr><td colspan="5" style="text-align:right;padding-right:16px;">SubTotal</td><td id="subtotal">$0</td><td class="no-print"></td></tr>
+          <tr><td colspan="5" style="text-align:right;padding-right:16px;">Tax (5%)</td><td id="tax">$0</td><td class="no-print"></td></tr>
+          <tr><td colspan="5" style="text-align:right;padding-right:16px;">Discount</td><td><input type="number" id="discount" value="0" style="width:70px;padding:4px;border:1px solid #ccc;border-radius:4px;font-size:13px;" oninput="calcTotals()"></td><td class="no-print"></td></tr>
+          <tr><td colspan="5" style="text-align:right;padding-right:16px;font-size:15px;color:#1e40af;">Grand Total</td><td id="grandTotal" style="font-size:15px;color:#1e40af;font-weight:800;">$0</td><td class="no-print"></td></tr>
+        </tfoot>
+      </table>
+
+      <!-- Add row -->
+      <div class="no-print" style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center;">
+        <select id="newCat" style="padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;">
+          <option>Hotel</option><option>Travel</option><option>Food</option><option>Activity</option><option>Other</option>
+        </select>
+        <input type="text" id="newDesc" placeholder="Description" style="flex:1;min-width:120px;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;">
+        <input type="number" id="newQty" placeholder="Qty" value="1" style="width:60px;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;">
+        <input type="number" id="newUnit" placeholder="Unit $" style="width:80px;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;">
+        <button class="btn btn-sm" onclick="addRow()">+ Add</button>
+      </div>
+
+      <!-- Actions -->
+      <div class="no-print" style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+        <button class="btn btn-outline btn-sm" onclick="downloadInvoice()">⬇️ Download Invoice</button>
+        <button class="btn btn-outline btn-sm" onclick="window.print()">📄 Export as PDF</button>
+        <button class="btn btn-green btn-sm" style="margin-left:auto;" onclick="markPaid()">✅ Mark as paid</button>
+      </div>
+    </div>
+
+    <!-- Budget Insights -->
+    <div style="width:230px;flex-shrink:0;">
+      <div class="card" style="text-align:center;">
+        <strong style="font-size:13px;display:block;margin-bottom:14px;color:#1e40af;">💰 Budget Insights</strong>
+        <div class="pie" id="piChart"></div>
+        <div style="font-size:13px;color:#555;line-height:2.2;text-align:left;">
+          Total Budget: <strong id="bTotal">$0</strong><br>
+          Total Spent: <strong id="bSpent">$0</strong><br>
+          Remaining: <strong id="bRemain" style="color:#16a34a;">$0</strong>
+        </div>
+        <button class="btn btn-outline btn-sm" style="width:100%;margin-top:12px;" onclick="window.location.href='budget.html?id='+tripId">View Day Plan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const params=new URLSearchParams(location.search);
+const tripId=params.get('id');
+let rows=[];
+let trip=null;
+
+document.getElementById('invDate').textContent=new Date().toLocaleDateString();
+
+if(tripId){
+  const trips=JSON.parse(localStorage.getItem('tl_trips')||'[]');
+  trip=trips.find(t=>t.id===tripId);
+  if(trip){
+    document.getElementById('invTripName').textContent=trip.name||trip.place;
+    document.getElementById('invId').textContent='INV-'+tripId.slice(-5).toUpperCase();
+    document.getElementById('bTotal').textContent='$'+(trip.budget||0);
+    if(trip.img){
+      const imgEl=document.getElementById('invImg');
+      imgEl.innerHTML=`<img src="${trip.img}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">`;
+    }
+  }
+}
+
+function getKey(){return 'tl_expense_'+(tripId||'default');}
+
+function loadExpense(){
+  const saved=JSON.parse(localStorage.getItem(getKey())||'null');
+  if(saved){rows=saved;}
+  else{
+    rows=[
+      {cat:'Hotel',desc:'Hotel booking paris',qty:3,unit:3000,amount:9000},
+      {cat:'Travel',desc:'Flight bookings (DAL → PAR)',qty:1,unit:12000,amount:12000},
+    ];
+  }
+  renderRows();calcTotals();
+}
+
+function renderRows(){
+  document.getElementById('expenseBody').innerHTML=rows.map((r,i)=>`
+    <tr id="row_${i}">
+      <td>${i+1}</td>
+      <td><span class="badge badge-blue">${r.cat}</span></td>
+      <td>${r.desc}</td>
+      <td>${r.qty}</td>
+      <td>$${r.unit.toLocaleString()}</td>
+      <td>$${r.amount.toLocaleString()}</td>
+      <td class="no-print"><button onclick="removeRow(${i})" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:14px;">✕</button></td>
+    </tr>`).join('');
+}
+
+function addRow(){
+  const cat=document.getElementById('newCat').value;
+  const desc=document.getElementById('newDesc').value.trim();
+  const qty=parseFloat(document.getElementById('newQty').value)||1;
+  const unit=parseFloat(document.getElementById('newUnit').value)||0;
+  if(!desc||!unit){alert('Please enter description and unit cost.');return;}
+  rows.push({cat,desc,qty,unit,amount:qty*unit});
+  document.getElementById('newDesc').value='';
+  document.getElementById('newUnit').value='';
+  renderRows();calcTotals();
+}
+
+function removeRow(i){rows.splice(i,1);renderRows();calcTotals();}
+
+function calcTotals(){
+  const sub=rows.reduce((s,r)=>s+r.amount,0);
+  const tax=sub*0.05;
+  const disc=parseFloat(document.getElementById('discount').value)||0;
+  const grand=sub+tax-disc;
+  document.getElementById('subtotal').textContent='$'+sub.toLocaleString();
+  document.getElementById('tax').textContent='$'+tax.toFixed(0);
+  document.getElementById('grandTotal').textContent='$'+grand.toFixed(0);
+  document.getElementById('bSpent').textContent='$'+grand.toFixed(0);
+  const budget=parseFloat(trip&&trip.budget||0);
+  const remain=budget-grand;
+  const remEl=document.getElementById('bRemain');
+  remEl.textContent='$'+remain.toFixed(0);
+  remEl.style.color=remain<0?'#dc2626':'#16a34a';
+  const pct=budget>0?Math.min(100,(grand/budget)*100):50;
+  document.getElementById('piChart').style.background=`conic-gradient(${remain<0?'#dc2626':'#2563eb'} 0% ${pct}%, #e5e7eb ${pct}% 100%)`;
+}
+
+function filterRows(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  document.querySelectorAll('#expenseBody tr').forEach(tr=>{
+    tr.style.display=(!q||tr.textContent.toLowerCase().includes(q))?'':'none';
+  });
+}
+
+function saveExpense(){
+  localStorage.setItem(getKey(),JSON.stringify(rows));
+  const msg=document.getElementById('msg');
+  msg.className='alert alert-success';msg.style.display='block';msg.textContent='Expense saved!';
+  setTimeout(()=>msg.style.display='none',2000);
+}
+
+function markPaid(){
+  const el=document.getElementById('payStatus');
+  el.textContent='paid';el.className='badge badge-green';
+  saveExpense();
+}
+
+function downloadInvoice(){
+  const sub=rows.reduce((s,r)=>s+r.amount,0);
+  const tax=sub*0.05;
+  const disc=parseFloat(document.getElementById('discount').value)||0;
+  const grand=sub+tax-disc;
+  const tripName=document.getElementById('invTripName').textContent;
+  const invId=document.getElementById('invId').textContent;
+  const date=document.getElementById('invDate').textContent;
+  const payStatus=document.getElementById('payStatus').textContent;
+  const budget=parseFloat(trip&&trip.budget||0);
+  const remain=budget-grand;
+  const pct=budget>0?Math.min(100,Math.round((grand/budget)*100)):50;
+  const pieColor=remain<0?'#dc2626':'#2563eb';
+
+  const rowsHTML=rows.map((r,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td><span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">${r.cat}</span></td>
+      <td>${r.desc}</td>
+      <td>${r.qty}</td>
+      <td>$${r.unit.toLocaleString()}</td>
+      <td style="font-weight:600;">$${r.amount.toLocaleString()}</td>
+    </tr>`).join('');
+
+  const html=`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice - ${invId}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#333;background:#f5f7fa;padding:30px;}
+    .invoice-wrap{max-width:820px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.1);overflow:hidden;}
+    .inv-header{background:linear-gradient(135deg,#1e40af,#3b82f6);color:#fff;padding:28px 32px;display:flex;justify-content:space-between;align-items:flex-start;}
+    .inv-header .logo{font-size:24px;font-weight:800;letter-spacing:1px;}
+    .inv-header .inv-meta{text-align:right;font-size:12px;opacity:.9;line-height:2;}
+    .inv-body{padding:28px 32px;}
+    .trip-info{display:flex;gap:20px;align-items:flex-start;margin-bottom:24px;padding-bottom:20px;border-bottom:2px solid #f0f0f0;}
+    .trip-img{width:80px;height:80px;border-radius:10px;object-fit:cover;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;overflow:hidden;}
+    .trip-img img{width:100%;height:100%;object-fit:cover;}
+    .trip-details{flex:1;line-height:2;color:#555;}
+    .trip-details strong{font-size:16px;color:#1e40af;display:block;margin-bottom:2px;}
+    .status{display:inline-block;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;background:${payStatus==='paid'?'#dcfce7':'#fef9c3'};color:${payStatus==='paid'?'#15803d':'#a16207'};}
+    table{width:100%;border-collapse:collapse;margin-bottom:20px;}
+    th{background:#f9fafb;text-align:left;padding:10px 12px;border-bottom:2px solid #e5e7eb;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;}
+    td{padding:10px 12px;border-bottom:1px solid #f3f4f6;}
+    tr:last-child td{border-bottom:none;}
+    .totals{display:flex;justify-content:flex-end;margin-bottom:24px;}
+    .totals-box{width:260px;}
+    .totals-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#555;border-bottom:1px solid #f0f0f0;}
+    .totals-row.grand{font-size:16px;font-weight:800;color:#1e40af;border-top:2px solid #e5e7eb;border-bottom:none;padding-top:10px;margin-top:4px;}
+    .budget-box{background:#f0f7ff;border:1px solid #bfdbfe;border-radius:10px;padding:16px 20px;display:flex;gap:20px;align-items:center;}
+    .pie-wrap{position:relative;width:80px;height:80px;flex-shrink:0;}
+    .pie-wrap svg{width:80px;height:80px;}
+    .budget-stats{flex:1;line-height:2.2;font-size:13px;}
+    .footer{background:#f9fafb;padding:16px 32px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid #eee;}
+    @media print{body{padding:0;background:#fff;}.invoice-wrap{box-shadow:none;}}
+  </style>
+</head>
+<body>
+<div class="invoice-wrap">
+  <div class="inv-header">
+    <div>
+      <div class="logo">✈️ Traveloop</div>
+      <div style="font-size:12px;margin-top:6px;opacity:.85;">Travel Planning Platform</div>
+    </div>
+    <div class="inv-meta">
+      <div><strong style="font-size:16px;">${invId}</strong></div>
+      <div>Generated: ${date}</div>
+      <div>TAX no: 80345</div>
+    </div>
+  </div>
+
+  <div class="inv-body">
+    <div class="trip-info">
+      <div class="trip-img">${trip&&trip.img?`<img src="${trip.img}" alt="trip">`:'✈️'}</div>
+      <div class="trip-details">
+        <strong>${tripName}</strong>
+        ${trip?`📍 ${trip.place} &nbsp;|&nbsp; 📅 ${trip.startDate} → ${trip.endDate}<br>`:''}        Finance Activity: Flights | Hotel | Food | City | Utilities<br>
+        Payment Status — <span class="status">${payStatus}</span>
+      </div>
+    </div>
+
+    <table>
+      <thead><tr><th>#</th><th>Category</th><th>Description</th><th>Qty</th><th>Unit Cost</th><th>Amount</th></tr></thead>
+      <tbody>${rowsHTML}</tbody>
+    </table>
+
+    <div class="totals">
+      <div class="totals-box">
+        <div class="totals-row"><span>SubTotal</span><span>$${sub.toLocaleString()}</span></div>
+        <div class="totals-row"><span>Tax (5%)</span><span>$${tax.toFixed(0)}</span></div>
+        <div class="totals-row"><span>Discount</span><span>- $${disc.toLocaleString()}</span></div>
+        <div class="totals-row grand"><span>Grand Total</span><span>$${grand.toFixed(0)}</span></div>
+      </div>
+    </div>
+
+    <div class="budget-box">
+      <div class="pie-wrap">
+        <svg viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="30" fill="none" stroke="#e5e7eb" stroke-width="12"/>
+          <circle cx="40" cy="40" r="30" fill="none" stroke="${pieColor}" stroke-width="12"
+            stroke-dasharray="${(pct/100)*188.5} 188.5" stroke-dashoffset="47.1"
+            stroke-linecap="round" transform="rotate(-90 40 40)"/>
+          <text x="40" y="44" text-anchor="middle" font-size="13" font-weight="800" fill="${pieColor}">${pct}%</text>
+        </svg>
+      </div>
+      <div class="budget-stats">
+        <strong style="color:#1e40af;display:block;margin-bottom:4px;">💰 Budget Insights</strong>
+        Total Budget: <strong>$${budget.toLocaleString()}</strong><br>
+        Total Spent: <strong>$${grand.toFixed(0)}</strong><br>
+        Remaining: <strong style="color:${remain<0?'#dc2626':'#16a34a'};">$${remain.toFixed(0)}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Generated by Traveloop &nbsp;|&nbsp; ${date} &nbsp;|&nbsp; ${invId}</div>
+</div>
+</body></html>`;
+
+  const blob=new Blob([html],{type:'text/html'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=invId+'_invoice.html';
+  a.click();
+}
+
+loadExpense();
+</body>
+</html>

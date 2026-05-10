@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Traveloop - Admin Panel</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .bar-wrap{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+    .bar-label{width:120px;font-size:12px;color:#555;flex-shrink:0;}
+    .bar-track{flex:1;background:#e5e7eb;border-radius:4px;height:14px;overflow:hidden;}
+    .bar-fill{height:100%;background:#2563eb;border-radius:4px;transition:width .6s;}
+    .bar-val{width:40px;font-size:12px;color:#888;text-align:right;flex-shrink:0;}
+    /* Visual charts */
+    .chart-area{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:16px;}
+    .chart-row{display:flex;gap:20px;align-items:flex-start;}
+    /* Pie chart SVG */
+    .pie-legend{display:flex;flex-direction:column;gap:8px;justify-content:center;}
+    .pie-legend-item{display:flex;align-items:center;gap:8px;font-size:12px;color:#555;}
+    .pie-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+    /* Line chart */
+    .line-chart-wrap{position:relative;height:160px;}
+    /* Bar chart vertical */
+    .vbar-wrap{display:flex;align-items:flex-end;gap:8px;height:120px;padding-top:10px;}
+    .vbar-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;}
+    .vbar-fill{width:100%;border-radius:4px 4px 0 0;transition:height .6s;}
+    .vbar-label{font-size:10px;color:#888;text-align:center;}
+    .vbar-val{font-size:10px;color:#555;font-weight:600;}
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <span class="logo">✈️ Traveloop</span>
+  <div class="nav-links">
+    <a href="dashboard.html">Home</a>
+    <span class="badge badge-red" style="font-size:12px;padding:4px 10px;">Admin</span>
+  </div>
+</nav>
+
+<div class="toolbar">
+  <input type="text" placeholder="Search...">
+  <select><option>Group by</option></select>
+  <select><option>Filter</option></select>
+  <select><option>Sort by</option></select>
+</div>
+
+<div class="page-wide">
+  <h2 style="color:#1e40af;margin-bottom:20px;">Admin Panel 📊</h2>
+
+  <!-- Stats row -->
+  <div class="grid-4" style="margin-bottom:24px;">
+    <div class="stat-box"><div class="stat-num" id="statUsers">0</div><div class="stat-label">Registered Users</div></div>
+    <div class="stat-box"><div class="stat-num" id="statTrips">0</div><div class="stat-label">Total Trips</div></div>
+    <div class="stat-box"><div class="stat-num" id="statPosts">0</div><div class="stat-label">Community Posts</div></div>
+    <div class="stat-box"><div class="stat-num" id="statActive">0</div><div class="stat-label">Active Trips</div></div>
+  </div>
+
+  <div style="display:flex;gap:24px;align-items:flex-start;">
+    <!-- Charts -->
+    <div style="flex:1;">
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="btn btn-sm" onclick="showTab('cities')">Popular Cities</button>
+        <button class="btn btn-outline btn-sm" onclick="showTab('activities')">Popular Activities</button>
+        <button class="btn btn-outline btn-sm" onclick="showTab('users')">User Trends</button>
+        <button class="btn btn-outline btn-sm" onclick="showTab('manage')">Manage Users</button>
+      </div>
+
+      <!-- Popular Cities -->
+      <div id="tab-cities" class="card">
+        <strong style="color:#1e40af;display:block;margin-bottom:14px;">🏙️ Popular Cities</strong>
+        <!-- Pie chart + bar chart side by side -->
+        <div class="chart-row" style="margin-bottom:20px;">
+          <div>
+            <svg id="pie-svg" width="160" height="160" viewBox="0 0 160 160"></svg>
+          </div>
+          <div class="pie-legend" id="pie-legend"></div>
+        </div>
+        <div id="cities-chart"></div>
+      </div>
+
+      <!-- Popular Activities -->
+      <div id="tab-activities" class="card" style="display:none;">
+        <strong style="color:#1e40af;display:block;margin-bottom:14px;">🎯 Popular Activities</strong>
+        <!-- Vertical bar chart -->
+        <div class="vbar-wrap" id="vbar-chart"></div>
+        <div style="border-top:2px solid #e5e7eb;margin-top:4px;"></div>
+        <div id="activities-chart" style="margin-top:16px;"></div>
+      </div>
+
+      <!-- User Trends -->
+      <div id="tab-users" class="card" style="display:none;">
+        <strong style="color:#1e40af;display:block;margin-bottom:14px;">📈 User Trends</strong>
+        <!-- Line chart via SVG -->
+        <svg id="line-svg" width="100%" height="180" style="display:block;margin-bottom:12px;"></svg>
+        <div id="trends-chart"></div>
+      </div>
+
+      <!-- Manage Users -->
+      <div id="tab-manage" class="card" style="display:none;">
+        <strong style="color:#1e40af;display:block;margin-bottom:14px;">👥 Registered Users</strong>
+        <div id="users-table"></div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div style="width:260px;flex-shrink:0;">
+      <div class="card" style="font-size:12px;color:#555;line-height:1.8;margin-bottom:12px;">
+        <strong style="color:#1e40af;">Admin Controls</strong>
+        <p style="margin-top:8px;">Manage users, view trip analytics, and monitor platform activity.</p>
+      </div>
+      <div class="card" style="font-size:12px;color:#555;line-height:1.8;margin-bottom:12px;">
+        <strong>Trip Status Breakdown</strong>
+        <div style="margin-top:10px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span>Ongoing</span><span id="s-ongoing" class="badge badge-green">0</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span>Upcoming</span><span id="s-upcoming" class="badge badge-blue">0</span></div>
+          <div style="display:flex;justify-content:space-between;"><span>Completed</span><span id="s-completed" class="badge badge-gray">0</span></div>
+        </div>
+      </div>
+      <div class="card" style="font-size:12px;color:#555;line-height:1.8;">
+        <strong>User Trends & Disruptions</strong>
+        <p style="margin-top:8px;">This section focuses on prevailing analysis across various data points to give useful insights.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const PIE_COLORS=['#2563eb','#16a34a','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
+
+function drawPie(data,svgId,legendId){
+  const svg=document.getElementById(svgId);
+  const legend=document.getElementById(legendId);
+  const total=data.reduce((s,d)=>s+d.count,0);
+  const cx=80,cy=80,r=70,ir=35;
+  let angle=-Math.PI/2;
+  let paths='';
+  data.forEach((d,i)=>{
+    const slice=(d.count/total)*2*Math.PI;
+    const x1=cx+r*Math.cos(angle),y1=cy+r*Math.sin(angle);
+    const x2=cx+r*Math.cos(angle+slice),y2=cy+r*Math.sin(angle+slice);
+    const xi1=cx+ir*Math.cos(angle),yi1=cy+ir*Math.sin(angle);
+    const xi2=cx+ir*Math.cos(angle+slice),yi2=cy+ir*Math.sin(angle+slice);
+    const large=slice>Math.PI?1:0;
+    paths+=`<path d="M${xi1},${yi1} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} L${xi2},${yi2} A${ir},${ir} 0 ${large},0 ${xi1},${yi1}" fill="${PIE_COLORS[i%PIE_COLORS.length]}" stroke="#fff" stroke-width="2"/>`;
+    angle+=slice;
+  });
+  svg.innerHTML=paths;
+  legend.innerHTML=data.map((d,i)=>`
+    <div class="pie-legend-item">
+      <div class="pie-dot" style="background:${PIE_COLORS[i%PIE_COLORS.length]};"></div>
+      <span>${d.name} (${Math.round((d.count/total)*100)}%)</span>
+    </div>`).join('');
+}
+
+function drawVBars(data,containerId){
+  const max=Math.max(...data.map(d=>d.count));
+  document.getElementById(containerId).innerHTML=data.map((d,i)=>`
+    <div class="vbar-col">
+      <div class="vbar-val">${d.count}</div>
+      <div class="vbar-fill" style="height:${Math.round((d.count/max)*100)}px;background:${PIE_COLORS[i%PIE_COLORS.length]};"></div>
+      <div class="vbar-label">${d.name}</div>
+    </div>`).join('');
+}
+
+function drawLine(data,svgId){
+  const svg=document.getElementById(svgId);
+  const W=svg.clientWidth||600,H=180,pad=40;
+  const max=Math.max(...data.map(d=>d.count));
+  const pts=data.map((d,i)=>({
+    x:pad+(i/(data.length-1))*(W-pad*2),
+    y:H-pad-(d.count/max)*(H-pad*2)
+  }));
+  const line=pts.map((p,i)=>(i===0?`M${p.x},${p.y}`:`L${p.x},${p.y}`)).join(' ');
+  const area=`M${pts[0].x},${H-pad} `+pts.map(p=>`L${p.x},${p.y}`).join(' ')+` L${pts[pts.length-1].x},${H-pad} Z`;
+  svg.innerHTML=`
+    <defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2563eb" stop-opacity=".3"/><stop offset="100%" stop-color="#2563eb" stop-opacity="0"/></linearGradient></defs>
+    <path d="${area}" fill="url(#lg)"/>
+    <path d="${line}" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round"/>
+    ${pts.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="4" fill="#2563eb"/><text x="${p.x}" y="${p.y-8}" text-anchor="middle" font-size="10" fill="#555">${data[i].count}</text><text x="${p.x}" y="${H-pad+14}" text-anchor="middle" font-size="10" fill="#888">${data[i].month}</text>`).join('')}
+    <line x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}" stroke="#e5e7eb" stroke-width="1"/>`;
+}
+
+function loadStats(){
+  const users=JSON.parse(localStorage.getItem('tl_users')||'[]');
+  const trips=JSON.parse(localStorage.getItem('tl_trips')||'[]');
+  const posts=JSON.parse(localStorage.getItem('tl_posts')||'[]');
+  document.getElementById('statUsers').textContent=users.length;
+  document.getElementById('statTrips').textContent=trips.length;
+  document.getElementById('statPosts').textContent=posts.length;
+  document.getElementById('statActive').textContent=trips.filter(t=>t.status==='ongoing').length;
+  document.getElementById('s-ongoing').textContent=trips.filter(t=>t.status==='ongoing').length;
+  document.getElementById('s-upcoming').textContent=trips.filter(t=>t.status==='upcoming').length;
+  document.getElementById('s-completed').textContent=trips.filter(t=>t.status==='completed').length;
+  const cityCounts={};
+  trips.forEach(t=>{const c=(t.place||'Unknown').split(',')[0];cityCounts[c]=(cityCounts[c]||0)+1;});
+  const cityData=[
+    {name:'Paris',count:cityCounts['Paris']||12},
+    {name:'Bali',count:cityCounts['Bali']||9},
+    {name:'Tokyo',count:cityCounts['Tokyo']||8},
+    {name:'Rome',count:cityCounts['Rome']||7},
+    {name:'New York',count:cityCounts['New York']||6},
+    {name:'Dubai',count:cityCounts['Dubai']||4},
+  ].slice(0,6);
+  drawPie(cityData,'pie-svg','pie-legend');
+  const maxC=Math.max(...cityData.map(c=>c.count));
+  document.getElementById('cities-chart').innerHTML=cityData.map((c,i)=>`
+    <div class="bar-wrap">
+      <div class="bar-label">${c.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(c.count/maxC)*100}%;background:${PIE_COLORS[i%PIE_COLORS.length]};"></div></div>
+      <div class="bar-val">${c.count}</div>
+    </div>`).join('');
+  const actData=[
+    {name:'City',count:18},{name:'Beach',count:15},{name:'Hiking',count:12},
+    {name:'Food',count:10},{name:'Fly',count:7},{name:'Swim',count:6}
+  ];
+  drawVBars(actData,'vbar-chart');
+  const maxA=Math.max(...actData.map(a=>a.count));
+  document.getElementById('activities-chart').innerHTML=actData.map((a,i)=>`
+    <div class="bar-wrap">
+      <div class="bar-label">${a.name} Tours</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(a.count/maxA)*100}%;background:${PIE_COLORS[i%PIE_COLORS.length]};"></div></div>
+      <div class="bar-val">${a.count}</div>
+    </div>`).join('');
+  const trendData=[
+    {month:'Jan',count:8},{month:'Feb',count:12},{month:'Mar',count:15},
+    {month:'Apr',count:11},{month:'May',count:20},{month:'Jun',count:25}
+  ];
+  setTimeout(()=>drawLine(trendData,'line-svg'),50);
+  const maxT=Math.max(...trendData.map(t=>t.count));
+  document.getElementById('trends-chart').innerHTML=`<p style="font-size:12px;color:#888;margin-bottom:10px;">New trips per month (2025)</p>`+
+    trendData.map(t=>`
+    <div class="bar-wrap">
+      <div class="bar-label">${t.month}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(t.count/maxT)*100}%;background:#f59e0b;"></div></div>
+      <div class="bar-val">${t.count}</div>
+    </div>`).join('');
+  document.getElementById('users-table').innerHTML=users.length?`
+    <table>
+      <thead><tr><th>#</th><th>Name</th><th>Email</th><th>City</th><th>Country</th></tr></thead>
+      <tbody>${users.map((u,i)=>`
+        <tr><td>${i+1}</td><td>${u.firstName||''} ${u.lastName||''}</td><td>${u.email||''}</td><td>${u.city||'—'}</td><td>${u.country||'—'}</td></tr>`).join('')}
+      </tbody>
+    </table>`:'<p style="color:#bbb;font-size:13px;">No registered users yet.</p>';
+}
+
+function showTab(tab){
+  ['cities','activities','users','manage'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t===tab?'block':'none';
+  });
+  if(tab==='users')setTimeout(()=>{
+    const trendData=[{month:'Jan',count:8},{month:'Feb',count:12},{month:'Mar',count:15},{month:'Apr',count:11},{month:'May',count:20},{month:'Jun',count:25}];
+    drawLine(trendData,'line-svg');
+  },50);
+}
+
+loadStats();
+</script>
+</body>
+</html>

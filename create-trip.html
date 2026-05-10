@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Traveloop - Create Trip</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <span class="logo">✈️ Traveloop</span>
+  <div class="nav-links">
+    <a href="dashboard.html">Home</a>
+    <a href="my-trips.html">My Trips</a>
+    <a href="profile.html">Profile</a>
+    <a href="admin.html" style="color:#dc2626;font-weight:700;">Admin</a>
+  </div>
+</nav>
+
+<div class="page">
+  <h2 style="margin-bottom:20px;color:#1e40af;font-size:22px;">Plan a new Trip ✈️</h2>
+  <div id="msg" class="alert"></div>
+
+  <div class="card">
+    <div class="form-group">
+      <label>Trip Name</label>
+      <input type="text" id="tripName" placeholder="e.g. Europe Summer Adventure">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Start Date</label>
+        <input type="date" id="startDate">
+      </div>
+      <div class="form-group">
+        <label>End Date</label>
+        <input type="date" id="endDate">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Select a Place / Destination</label>
+      <input type="text" id="place" placeholder="e.g. Paris, France" oninput="suggestPlace(this.value)">
+      <div id="suggestions" style="border:1px solid #e5e7eb;border-radius:6px;margin-top:4px;display:none;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:10;position:relative;"></div>
+    </div>
+    <div class="form-group">
+      <label>Budget (Total $)</label>
+      <input type="number" id="budget" placeholder="e.g. 5000">
+    </div>
+    <div class="form-group">
+      <label>Trip Status</label>
+      <select id="status">
+        <option value="upcoming">Upcoming</option>
+        <option value="ongoing">Ongoing</option>
+        <option value="completed">Completed</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Suggestions -->
+  <div class="sec-label">Suggested Destinations</div>
+  <div class="grid-3" id="suggestGrid" style="margin-bottom:22px;"></div>
+
+  <div style="display:flex;gap:10px;justify-content:flex-end;">
+    <a href="my-trips.html" class="btn btn-outline">Cancel</a>
+    <button class="btn" onclick="saveTrip()">Save & Build Itinerary →</button>
+  </div>
+</div>
+
+<script>
+const DESTINATIONS=[
+  {name:'Paris, France',img:'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=200&fit=crop'},
+  {name:'Bali, Indonesia',img:'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&h=200&fit=crop'},
+  {name:'New York, USA',img:'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=200&fit=crop'},
+  {name:'Tokyo, Japan',img:'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=200&fit=crop'},
+  {name:'Rome, Italy',img:'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=400&h=200&fit=crop'},
+  {name:'Santorini, Greece',img:'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=400&h=200&fit=crop'},
+  {name:'Dubai, UAE',img:'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&h=200&fit=crop'},
+  {name:'Maldives',img:'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=400&h=200&fit=crop'},
+  {name:'Swiss Alps',img:'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=400&h=200&fit=crop'},
+];
+
+// Check if editing
+const params=new URLSearchParams(location.search);
+const editId=params.get('edit');
+let editTrip=null;
+if(editId){
+  const trips=JSON.parse(localStorage.getItem('tl_trips')||'[]');
+  editTrip=trips.find(t=>t.id===editId);
+  if(editTrip){
+    document.getElementById('tripName').value=editTrip.name||'';
+    document.getElementById('startDate').value=editTrip.startDate||'';
+    document.getElementById('endDate').value=editTrip.endDate||'';
+    document.getElementById('place').value=editTrip.place||'';
+    document.getElementById('budget').value=editTrip.budget||'';
+    document.getElementById('status').value=editTrip.status||'upcoming';
+    document.querySelector('h2').textContent='Edit Trip ✏️';
+  }
+}
+
+function renderSuggestions(){
+  document.getElementById('suggestGrid').innerHTML=DESTINATIONS.map(d=>`
+    <div class="img-card" onclick="selectDest('${d.name}','${d.img}')">
+      <img src="${d.img}" alt="${d.name}" style="height:120px;">
+      <div class="img-overlay">${d.name}</div>
+    </div>`).join('');
+}
+
+function selectDest(name,img){
+  document.getElementById('place').value=name;
+  document.getElementById('suggestions').style.display='none';
+  window._selectedImg=img;
+}
+
+function suggestPlace(q){
+  const box=document.getElementById('suggestions');
+  if(!q){box.style.display='none';return;}
+  const matches=DESTINATIONS.filter(d=>d.name.toLowerCase().includes(q.toLowerCase()));
+  if(!matches.length){box.style.display='none';return;}
+  box.style.display='block';
+  box.innerHTML=matches.map(d=>`
+    <div onclick="selectDest('${d.name}','${d.img}')" style="padding:10px 14px;cursor:pointer;display:flex;gap:10px;align-items:center;border-bottom:1px solid #f0f0f0;">
+      <img src="${d.img}" style="width:40px;height:30px;object-fit:cover;border-radius:4px;">
+      <span style="font-size:13px;">${d.name}</span>
+    </div>`).join('');
+}
+
+function saveTrip(){
+  const name=document.getElementById('tripName').value.trim();
+  const startDate=document.getElementById('startDate').value;
+  const endDate=document.getElementById('endDate').value;
+  const place=document.getElementById('place').value.trim();
+  const budget=document.getElementById('budget').value;
+  const status=document.getElementById('status').value;
+  if(!name||!startDate||!endDate||!place){showMsg('Please fill in all required fields.','error');return;}
+  if(endDate<startDate){showMsg('End date must be after start date.','error');return;}
+  const img=window._selectedImg||DESTINATIONS.find(d=>d.name.toLowerCase().includes(place.toLowerCase()))?.img||'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400&h=200&fit=crop';
+  const trips=JSON.parse(localStorage.getItem('tl_trips')||'[]');
+  if(editTrip){
+    const idx=trips.findIndex(t=>t.id===editId);
+    trips[idx]={...trips[idx],name,startDate,endDate,place,budget,status,img};
+    localStorage.setItem('tl_trips',JSON.stringify(trips));
+    showMsg('Trip updated!','success');
+    setTimeout(()=>window.location.href='itinerary.html?id='+editId,1000);
+  } else {
+    const id='trip_'+Date.now();
+    trips.push({id,name,startDate,endDate,place,budget,status,img,sections:[],itinerary:[]});
+    localStorage.setItem('tl_trips',JSON.stringify(trips));
+    showMsg('Trip saved! Building itinerary...','success');
+    setTimeout(()=>window.location.href='itinerary.html?id='+id,1000);
+  }
+}
+
+function showMsg(t,type){
+  const m=document.getElementById('msg');
+  m.className='alert alert-'+type;
+  m.style.display='block';
+  m.textContent=t;
+}
+
+renderSuggestions();
+</script>
+</body>
+</html>

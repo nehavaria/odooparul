@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Traveloop - Trip Notes</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <span class="logo">✈️ Traveloop</span>
+  <div class="nav-links">
+    <a href="dashboard.html">Home</a>
+    <a href="my-trips.html">My Trips</a>
+    <a href="admin.html" style="color:#dc2626;font-weight:700;">Admin</a>
+  </div>
+</nav>
+
+<div class="toolbar">
+  <input type="text" id="searchInput" placeholder="Search notes..." oninput="renderNotes()">
+  <select id="groupBy" onchange="renderNotes()"><option value="">Group by</option><option value="day">Day</option><option value="stop">Stop</option></select>
+  <select id="filterBy" onchange="renderNotes()"><option value="">Filter</option></select>
+  <select id="sortBy" onchange="renderNotes()"><option value="">Sort by</option><option value="date">Date</option><option value="title">Title</option></select>
+</div>
+
+<div class="page">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div>
+      <h2 style="color:#1e40af;">📝 Trip Notes</h2>
+      <p id="tripMeta" style="font-size:13px;color:#888;margin-top:3px;"></p>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <select id="tripSelect" style="padding:7px 12px;border:1px solid #ccc;border-radius:6px;font-size:13px;" onchange="loadTripNotes()">
+        <option value="">Select Trip</option>
+      </select>
+      <button class="btn btn-sm" onclick="openNoteModal()">+ Add Note</button>
+    </div>
+  </div>
+
+  <!-- Filter tabs -->
+  <div style="display:flex;gap:8px;margin-bottom:18px;">
+    <button class="btn btn-sm" id="btn-all" onclick="setFilter('all')">All</button>
+    <button class="btn btn-outline btn-sm" id="btn-day" onclick="setFilter('day')">by Day</button>
+    <button class="btn btn-outline btn-sm" id="btn-stop" onclick="setFilter('stop')">by Stop</button>
+  </div>
+
+  <div id="msg" class="alert"></div>
+  <div id="notes-list"></div>
+</div>
+
+<!-- Note Modal -->
+<div class="modal-overlay" id="noteModal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeNoteModal()">✕</button>
+    <h3 id="modalTitle">📝 Add Note</h3>
+    <div class="form-group"><label>Title</label><input type="text" id="noteTitle" placeholder="e.g. Hotel check-in details"></div>
+    <div class="form-group"><label>Details</label><textarea id="noteDetails" rows="4" placeholder="Enter note details..."></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Day</label><input type="text" id="noteDay" placeholder="e.g. Day 3"></div>
+      <div class="form-group"><label>Stop / Location</label><input type="text" id="noteStop" placeholder="e.g. Rome stop"></div>
+    </div>
+    <div class="form-group"><label>Date</label><input type="date" id="noteDate"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-outline btn-sm" onclick="closeNoteModal()">Cancel</button>
+      <button class="btn btn-sm" id="saveNoteBtn" onclick="saveNote()">Save Note</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const params=new URLSearchParams(location.search);
+let currentTripId=params.get('id')||null;
+let editNoteId=null;
+let activeFilter='all';
+
+function getKey(){return 'tl_notes_'+(currentTripId||'default');}
+function getNotes(){return JSON.parse(localStorage.getItem(getKey())||'[]');}
+function saveNotes(notes){localStorage.setItem(getKey(),JSON.stringify(notes));}
+
+const DEFAULT_NOTES=[
+  {id:'n1',title:'Hotel check-in details - Rome stop',details:'check in after 2pm, room 302, breakfast included (7-10am)',day:'Day 3',stop:'Rome',date:'2025-06-14'},
+  {id:'n2',title:'Flight reminder - Paris to Rome',details:'Flight at 10:30am, Terminal 2, Gate B14. Arrive 2hrs early.',day:'Day 1',stop:'Paris',date:'2025-06-12'},
+  {id:'n3',title:'Restaurant recommendation',details:'Try La Pergola in Rome - best pasta in the city! Book in advance.',day:'Day 4',stop:'Rome',date:'2025-06-15'},
+];
+
+function loadTrips(){
+  const trips=JSON.parse(localStorage.getItem('tl_trips')||'[]');
+  const sel=document.getElementById('tripSelect');
+  trips.forEach(t=>{
+    const opt=document.createElement('option');
+    opt.value=t.id;opt.textContent=t.name||t.place;
+    if(t.id===currentTripId)opt.selected=true;
+    sel.appendChild(opt);
+  });
+  if(currentTripId){
+    const trip=trips.find(t=>t.id===currentTripId);
+    if(trip)document.getElementById('tripMeta').textContent='📍 '+trip.place+' | 📅 '+trip.startDate+' → '+trip.endDate;
+    if(!getNotes().length)saveNotes(DEFAULT_NOTES);
+  }
+}
+
+function loadTripNotes(){
+  currentTripId=document.getElementById('tripSelect').value||null;
+  if(currentTripId&&!getNotes().length)saveNotes(DEFAULT_NOTES);
+  renderNotes();
+}
+
+function setFilter(f){
+  activeFilter=f;
+  ['all','day','stop'].forEach(k=>{
+    document.getElementById('btn-'+k).className=k===f?'btn btn-sm':'btn btn-outline btn-sm';
+  });
+  renderNotes();
+}
+
+function renderNotes(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const srt=document.getElementById('sortBy').value;
+  let notes=getNotes();
+  if(!notes.length&&!currentTripId)notes=DEFAULT_NOTES;
+  if(q)notes=notes.filter(n=>n.title.toLowerCase().includes(q)||n.details.toLowerCase().includes(q));
+  if(activeFilter==='day')notes=notes.filter(n=>n.day);
+  if(activeFilter==='stop')notes=notes.filter(n=>n.stop);
+  if(srt==='date')notes.sort((a,b)=>a.date>b.date?1:-1);
+  if(srt==='title')notes.sort((a,b)=>a.title.localeCompare(b.title));
+  document.getElementById('notes-list').innerHTML=notes.length?notes.map(n=>`
+    <div class="note-card">
+      <div class="note-title">${n.title}</div>
+      <div class="note-meta">${n.details}<br>${n.day?'<span class="badge badge-blue" style="margin-top:4px;display:inline-block;">'+n.day+'</span>':''} ${n.stop?'<span class="badge badge-yellow" style="margin-top:4px;display:inline-block;">'+n.stop+'</span>':''} ${n.date?'<span style="font-size:11px;color:#aaa;margin-left:4px;">'+n.date+'</span>':''}</div>
+      <div class="note-actions">
+        <button title="Edit" onclick="editNote('${n.id}')">✏️</button>
+        <button title="Delete" onclick="deleteNote('${n.id}')">🗑️</button>
+      </div>
+    </div>`).join(''):'<p style="color:#bbb;text-align:center;padding:30px;">No notes yet. Add your first note!</p>';
+}
+
+function openNoteModal(){
+  editNoteId=null;
+  document.getElementById('modalTitle').textContent='📝 Add Note';
+  document.getElementById('noteTitle').value='';
+  document.getElementById('noteDetails').value='';
+  document.getElementById('noteDay').value='';
+  document.getElementById('noteStop').value='';
+  document.getElementById('noteDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('noteModal').classList.add('open');
+}
+
+function editNote(id){
+  const notes=getNotes().length?getNotes():DEFAULT_NOTES;
+  const note=notes.find(n=>n.id===id);
+  if(!note)return;
+  editNoteId=id;
+  document.getElementById('modalTitle').textContent='✏️ Edit Note';
+  document.getElementById('noteTitle').value=note.title;
+  document.getElementById('noteDetails').value=note.details;
+  document.getElementById('noteDay').value=note.day||'';
+  document.getElementById('noteStop').value=note.stop||'';
+  document.getElementById('noteDate').value=note.date||'';
+  document.getElementById('noteModal').classList.add('open');
+}
+
+function saveNote(){
+  const title=document.getElementById('noteTitle').value.trim();
+  const details=document.getElementById('noteDetails').value.trim();
+  if(!title){alert('Please enter a title.');return;}
+  let notes=getNotes().length?getNotes():DEFAULT_NOTES.map(n=>({...n}));
+  if(editNoteId){
+    const idx=notes.findIndex(n=>n.id===editNoteId);
+    if(idx>-1)notes[idx]={...notes[idx],title,details,day:document.getElementById('noteDay').value,stop:document.getElementById('noteStop').value,date:document.getElementById('noteDate').value};
+  } else {
+    notes.unshift({id:'n'+Date.now(),title,details,day:document.getElementById('noteDay').value,stop:document.getElementById('noteStop').value,date:document.getElementById('noteDate').value});
+  }
+  saveNotes(notes);closeNoteModal();renderNotes();
+}
+
+function deleteNote(id){
+  if(!confirm('Delete this note?'))return;
+  let notes=getNotes().length?getNotes():DEFAULT_NOTES;
+  saveNotes(notes.filter(n=>n.id!==id));renderNotes();
+}
+
+function closeNoteModal(){document.getElementById('noteModal').classList.remove('open');}
+
+loadTrips();
+renderNotes();
+</script>
+</body>
+</html>

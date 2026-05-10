@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Traveloop - Profile</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+.profile-photo-wrap{position:relative;width:110px;height:110px;flex-shrink:0;}
+.profile-photo-wrap img{width:110px;height:110px;border-radius:50%;object-fit:cover;border:4px solid #bfdbfe;display:block;}
+.photo-edit-btn{position:absolute;bottom:4px;right:4px;width:28px;height:28px;border-radius:50%;background:#2563eb;color:#fff;border:2px solid #fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;font-weight:700;}
+.tab-btn{padding:8px 18px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;background:#f3f4f6;color:#555;transition:all .2s;}
+.tab-btn.active{background:#2563eb;color:#fff;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.info-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f3f4f6;font-size:13px;}
+.info-label{color:#888;width:110px;flex-shrink:0;}
+.info-val{color:#333;font-weight:600;flex:1;}
+.pw-bar{height:5px;border-radius:3px;margin-top:5px;transition:all .3s;background:#e5e7eb;}
+.eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:12px;color:#aaa;background:none;border:none;font-weight:700;padding:2px 6px;}
+.pw-wrap{position:relative;}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <span class="logo">Traveloop</span>
+  <div class="nav-links">
+    <a href="dashboard.html">Home</a>
+    <a href="my-trips.html">My Trips</a>
+    <a href="community.html">Community</a>
+    <a href="admin.html" style="color:#dc2626;font-weight:700;">Admin</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- Header card -->
+  <div class="card" style="display:flex;gap:24px;align-items:flex-start;margin-bottom:20px;">
+    <div class="profile-photo-wrap">
+      <img id="userPhoto" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=110&h=110&fit=crop" alt="Profile">
+      <div class="photo-edit-btn" onclick="document.getElementById('photoInput').click()" title="Change photo">Edit</div>
+      <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="changePhoto(event)">
+    </div>
+    <div style="flex:1;">
+      <h2 id="userName" style="font-size:22px;color:#1e40af;margin-bottom:6px;">User Name</h2>
+      <p id="userEmail" style="font-size:13px;color:#888;margin-bottom:3px;"></p>
+      <p id="userPhone" style="font-size:13px;color:#888;margin-bottom:3px;"></p>
+      <p id="userCity" style="font-size:13px;color:#888;margin-bottom:6px;"></p>
+      <p id="userInfo" style="font-size:13px;color:#777;font-style:italic;"></p>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+        <button class="btn btn-outline btn-sm" onclick="showTab('edit')">Edit Profile</button>
+        <button class="btn btn-outline btn-sm" onclick="showTab('password')">Change Password</button>
+        <button class="btn btn-red btn-sm" onclick="logout()">Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid-4" style="margin-bottom:20px;">
+    <div class="stat-box"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Total Trips</div></div>
+    <div class="stat-box"><div class="stat-num" id="statOngoing">0</div><div class="stat-label">Ongoing</div></div>
+    <div class="stat-box"><div class="stat-num" id="statUpcoming">0</div><div class="stat-label">Upcoming</div></div>
+    <div class="stat-box"><div class="stat-num" id="statCompleted">0</div><div class="stat-label">Completed</div></div>
+  </div>
+
+  <!-- Tab buttons -->
+  <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;">
+    <button class="tab-btn active" id="tab-btn-info"     onclick="showTab('info')">My Info</button>
+    <button class="tab-btn"        id="tab-btn-edit"     onclick="showTab('edit')">Edit Profile</button>
+    <button class="tab-btn"        id="tab-btn-password" onclick="showTab('password')">Change Password</button>
+    <button class="tab-btn"        id="tab-btn-trips"    onclick="showTab('trips')">My Trips</button>
+  </div>
+
+  <!-- TAB: Info -->
+  <div class="tab-panel active" id="tab-info">
+    <div class="card">
+      <strong style="color:#1e40af;display:block;margin-bottom:14px;font-size:15px;">Profile Information</strong>
+      <div class="info-row"><span class="info-label">First Name</span><span class="info-val" id="infoFn">-</span></div>
+      <div class="info-row"><span class="info-label">Last Name</span><span class="info-val" id="infoLn">-</span></div>
+      <div class="info-row"><span class="info-label">Username</span><span class="info-val" id="infoUsername">-</span></div>
+      <div class="info-row"><span class="info-label">Email</span><span class="info-val" id="infoEmail">-</span></div>
+      <div class="info-row"><span class="info-label">Phone</span><span class="info-val" id="infoPhone">-</span></div>
+      <div class="info-row"><span class="info-label">City</span><span class="info-val" id="infoCity">-</span></div>
+      <div class="info-row"><span class="info-label">Country</span><span class="info-val" id="infoCountry">-</span></div>
+      <div class="info-row" style="border:none;"><span class="info-label">About Me</span><span class="info-val" id="infoAbout" style="font-style:italic;color:#777;">-</span></div>
+    </div>
+  </div>
+
+  <!-- TAB: Edit Profile -->
+  <div class="tab-panel" id="tab-edit">
+    <div class="card">
+      <strong style="color:#1e40af;display:block;margin-bottom:16px;font-size:15px;">Edit Profile</strong>
+      <div id="editMsg" class="alert"></div>
+
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px;padding:14px;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;">
+        <img id="editPhotoPreview" src="" style="width:70px;height:70px;border-radius:50%;object-fit:cover;border:3px solid #bfdbfe;">
+        <div>
+          <div style="font-weight:600;font-size:13px;margin-bottom:8px;">Profile Photo</div>
+          <button class="btn btn-outline btn-sm" onclick="document.getElementById('photoInput').click()">Change Photo</button>
+          <button class="btn btn-outline btn-sm" style="margin-left:6px;" onclick="removePhoto()">Remove</button>
+          <div style="font-size:11px;color:#aaa;margin-top:5px;">JPG, PNG or GIF. Max 5MB.</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group"><label>First Name</label><input type="text" id="editFn" placeholder="First Name"></div>
+        <div class="form-group"><label>Last Name</label><input type="text" id="editLn" placeholder="Last Name"></div>
+      </div>
+      <div class="form-group">
+        <label>Username / Display Name</label>
+        <input type="text" id="editUsername" placeholder="e.g. john_traveler">
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="editEmail" placeholder="you@example.com">
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Phone Number</label><input type="tel" id="editPhone" placeholder="+1 234 567 890"></div>
+        <div class="form-group"><label>City</label><input type="text" id="editCity" placeholder="New York"></div>
+      </div>
+      <div class="form-group"><label>Country</label><input type="text" id="editCountry" placeholder="USA"></div>
+      <div class="form-group"><label>About Me</label><textarea id="editInfo" rows="3" placeholder="Tell us about yourself..."></textarea></div>
+
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-sm" onclick="saveProfile()">Save Changes</button>
+        <button class="btn btn-outline btn-sm" onclick="showTab('info')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Change Password -->
+  <div class="tab-panel" id="tab-password">
+    <div class="card" style="max-width:480px;">
+      <strong style="color:#1e40af;display:block;margin-bottom:16px;font-size:15px;">Change Password</strong>
+      <div id="pwMsg" class="alert"></div>
+
+      <div class="form-group">
+        <label>Current Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="currentPw" placeholder="Enter current password" style="padding-right:50px;">
+          <button class="eye-btn" onclick="togglePw('currentPw',this)">Show</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>New Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="newPw" placeholder="Min 6 characters" oninput="checkStrength()" style="padding-right:50px;">
+          <button class="eye-btn" onclick="togglePw('newPw',this)">Show</button>
+        </div>
+        <div class="pw-bar" id="pwBar"></div>
+        <div id="pwLabel" style="font-size:11px;margin-top:3px;"></div>
+      </div>
+
+      <div class="form-group">
+        <label>Confirm New Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="confirmPw" placeholder="Re-enter new password" style="padding-right:50px;">
+          <button class="eye-btn" onclick="togglePw('confirmPw',this)">Show</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-sm" onclick="changePassword()">Update Password</button>
+        <button class="btn btn-outline btn-sm" onclick="showTab('info')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: My Trips -->
+  <div class="tab-panel" id="tab-trips">
+    <div class="sec-label" style="margin-top:0;">Upcoming / Ongoing Trips</div>
+    <div id="preplannedGrid" class="grid-3" style="margin-bottom:22px;"></div>
+    <div class="sec-label">Completed Trips</div>
+    <div id="completedGrid" class="grid-3"></div>
+  </div>
+
+</div>
+
+<script>
+var user = JSON.parse(localStorage.getItem('tl_user') || 'null');
+
+function loadProfile() {
+  if (!user) { window.location.href = 'login.html'; return; }
+  var photo = user.photo || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=110&h=110&fit=crop';
+  document.getElementById('userPhoto').src = photo;
+  document.getElementById('editPhotoPreview').src = photo;
+  var fullName = ((user.firstName || '') + ' ' + (user.lastName || '')).trim() || user.username || 'User';
+  document.getElementById('userName').textContent = fullName;
+  document.getElementById('userEmail').textContent = 'Email: ' + (user.email || '');
+  document.getElementById('userPhone').textContent = 'Phone: ' + (user.phone || '-');
+  document.getElementById('userCity').textContent = 'Location: ' + (user.city || '-') + (user.country ? ', ' + user.country : '');
+  document.getElementById('userInfo').textContent = user.info || '';
+  document.getElementById('infoFn').textContent = user.firstName || '-';
+  document.getElementById('infoLn').textContent = user.lastName || '-';
+  document.getElementById('infoUsername').textContent = user.username || '-';
+  document.getElementById('infoEmail').textContent = user.email || '-';
+  document.getElementById('infoPhone').textContent = user.phone || '-';
+  document.getElementById('infoCity').textContent = user.city || '-';
+  document.getElementById('infoCountry').textContent = user.country || '-';
+  document.getElementById('infoAbout').textContent = user.info || '-';
+}
+
+function showTab(name) {
+  ['info','edit','password','trips'].forEach(function(t) {
+    document.getElementById('tab-' + t).classList.remove('active');
+    document.getElementById('tab-btn-' + t).classList.remove('active');
+  });
+  document.getElementById('tab-' + name).classList.add('active');
+  document.getElementById('tab-btn-' + name).classList.add('active');
+  if (name === 'edit') fillEditForm();
+  if (name === 'trips') loadTripCards();
+}
+
+function fillEditForm() {
+  document.getElementById('editFn').value = user.firstName || '';
+  document.getElementById('editLn').value = user.lastName || '';
+  document.getElementById('editUsername').value = user.username || '';
+  document.getElementById('editEmail').value = user.email || '';
+  document.getElementById('editPhone').value = user.phone || '';
+  document.getElementById('editCity').value = user.city || '';
+  document.getElementById('editCountry').value = user.country || '';
+  document.getElementById('editInfo').value = user.info || '';
+  document.getElementById('editPhotoPreview').src = user.photo || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=110&h=110&fit=crop';
+}
+
+function saveProfile() {
+  var fn = document.getElementById('editFn').value.trim();
+  var email = document.getElementById('editEmail').value.trim();
+  if (!fn || !email) { showMsg('editMsg', 'First name and email are required.', 'error'); return; }
+  user.firstName = fn;
+  user.lastName = document.getElementById('editLn').value.trim();
+  user.username = document.getElementById('editUsername').value.trim();
+  user.email = email;
+  user.phone = document.getElementById('editPhone').value.trim();
+  user.city = document.getElementById('editCity').value.trim();
+  user.country = document.getElementById('editCountry').value.trim();
+  user.info = document.getElementById('editInfo').value.trim();
+  saveUser();
+  showMsg('editMsg', 'Profile updated successfully!', 'success');
+  setTimeout(function() { showTab('info'); loadProfile(); }, 1200);
+}
+
+function changePassword() {
+  var current = document.getElementById('currentPw').value;
+  var newPw = document.getElementById('newPw').value;
+  var confirm = document.getElementById('confirmPw').value;
+  if (!current || !newPw || !confirm) { showMsg('pwMsg', 'Please fill in all fields.', 'error'); return; }
+  if (current !== user.password) { showMsg('pwMsg', 'Current password is incorrect.', 'error'); return; }
+  if (newPw.length < 6) { showMsg('pwMsg', 'New password must be at least 6 characters.', 'error'); return; }
+  if (newPw !== confirm) { showMsg('pwMsg', 'New passwords do not match.', 'error'); return; }
+  user.password = newPw;
+  saveUser();
+  document.getElementById('currentPw').value = '';
+  document.getElementById('newPw').value = '';
+  document.getElementById('confirmPw').value = '';
+  document.getElementById('pwBar').style.width = '0%';
+  document.getElementById('pwLabel').textContent = '';
+  showMsg('pwMsg', 'Password changed successfully!', 'success');
+}
+
+function changePhoto(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { alert('File too large. Max 5MB.'); return; }
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    user.photo = ev.target.result;
+    saveUser();
+    document.getElementById('userPhoto').src = ev.target.result;
+    document.getElementById('editPhotoPreview').src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhoto() {
+  user.photo = '';
+  saveUser();
+  var def = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=110&h=110&fit=crop';
+  document.getElementById('userPhoto').src = def;
+  document.getElementById('editPhotoPreview').src = def;
+}
+
+function saveUser() {
+  localStorage.setItem('tl_user', JSON.stringify(user));
+  var users = JSON.parse(localStorage.getItem('tl_users') || '[]');
+  var idx = users.findIndex(function(u) { return u.email === user.email; });
+  if (idx > -1) { users[idx] = Object.assign({}, users[idx], user); }
+  else { users.push(user); }
+  localStorage.setItem('tl_users', JSON.stringify(users));
+}
+
+function togglePw(id, btn) {
+  var inp = document.getElementById(id);
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'Hide'; }
+  else { inp.type = 'password'; btn.textContent = 'Show'; }
+}
+
+function checkStrength() {
+  var pw = document.getElementById('newPw').value;
+  var bar = document.getElementById('pwBar');
+  var label = document.getElementById('pwLabel');
+  var score = 0;
+  if (pw.length >= 6) score++;
+  if (pw.length >= 10) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  var levels = [
+    {w:'20%', color:'#ef4444', text:'Very Weak'},
+    {w:'40%', color:'#f97316', text:'Weak'},
+    {w:'60%', color:'#eab308', text:'Fair'},
+    {w:'80%', color:'#22c55e', text:'Strong'},
+    {w:'100%', color:'#16a34a', text:'Very Strong'}
+  ];
+  var lvl = levels[Math.max(0, score - 1)];
+  bar.style.width = pw ? lvl.w : '0%';
+  bar.style.background = pw ? lvl.color : '#e5e7eb';
+  label.textContent = pw ? lvl.text : '';
+  label.style.color = lvl.color;
+}
+
+function showMsg(id, text, type) {
+  var m = document.getElementById(id);
+  m.className = 'alert alert-' + type;
+  m.style.display = 'block';
+  m.textContent = text;
+  if (type === 'success') setTimeout(function() { m.style.display = 'none'; }, 3000);
+}
+
+function logout() {
+  if (confirm('Are you sure you want to logout?')) {
+    localStorage.removeItem('tl_user');
+    window.location.href = 'login.html';
+  }
+}
+
+function loadTripCards() {
+  var trips = JSON.parse(localStorage.getItem('tl_trips') || '[]');
+  document.getElementById('statTotal').textContent = trips.length;
+  document.getElementById('statOngoing').textContent = trips.filter(function(t){return t.status==='ongoing';}).length;
+  document.getElementById('statUpcoming').textContent = trips.filter(function(t){return t.status==='upcoming';}).length;
+  document.getElementById('statCompleted').textContent = trips.filter(function(t){return t.status==='completed';}).length;
+
+  var upcoming = trips.filter(function(t){return t.status==='upcoming'||t.status==='ongoing';});
+  var completed = trips.filter(function(t){return t.status==='completed';});
+
+  function tripCard(t) {
+    return '<div class="trip-card">'
+      + '<div class="trip-img"><img src="' + (t.img||'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=300&h=120&fit=crop') + '" alt="trip"></div>'
+      + '<div class="trip-body">'
+      + '<div class="trip-name">' + (t.name||t.place) + '</div>'
+      + '<div class="trip-meta">' + t.place + '<br>' + t.startDate + ' to ' + t.endDate + '</div>'
+      + '<div class="trip-actions">'
+      + '<a href="budget.html?id=' + t.id + '" class="btn btn-outline btn-sm">View</a>'
+      + '<a href="itinerary.html?id=' + t.id + '" class="btn btn-outline btn-sm">Itinerary</a>'
+      + '</div></div></div>';
+  }
+
+  document.getElementById('preplannedGrid').innerHTML = upcoming.length ? upcoming.map(tripCard).join('') : '<p style="color:#bbb;font-size:13px;">No upcoming trips.</p>';
+  document.getElementById('completedGrid').innerHTML = completed.length ? completed.map(tripCard).join('') : '<p style="color:#bbb;font-size:13px;">No completed trips.</p>';
+}
+
+loadProfile();
+loadTripCards();
+</script>
+</body>
+</html>

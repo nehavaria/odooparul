@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Traveloop - Home</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <span class="logo">✈️ Traveloop</span>
+  <div class="nav-links">
+    <a href="dashboard.html" class="active">Home</a>
+    <a href="my-trips.html">My Trips</a>
+    <a href="community.html">Community</a>
+    <a href="index.html">Search</a>
+    <a href="profile.html">Profile</a>
+    <a href="admin.html" style="color:#dc2626;font-weight:700;">Admin</a>
+    <div class="user-avatar" id="avatarBtn" onclick="window.location.href='profile.html'">U</div>
+  </div>
+</nav>
+
+<div class="page">
+  <!-- Banner -->
+  <div class="banner">
+    <img src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1200&h=400&fit=crop" alt="Travel Banner">
+    <div class="banner-text">
+      <h1>Explore the World 🌍</h1>
+      <p>Plan your next adventure with Traveloop</p>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div style="display:flex;gap:8px;margin-bottom:22px;">
+    <input type="text" id="searchInput" placeholder="Search destinations, activities..." style="flex:1;padding:10px 14px;border:1.5px solid #d1d5db;border-radius:8px;font-size:14px;" oninput="filterDestinations()">
+    <select id="groupBy" style="padding:10px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;" onchange="filterDestinations()">
+      <option value="">Group by</option>
+      <option value="asia">Asia</option>
+      <option value="europe">Europe</option>
+      <option value="americas">Americas</option>
+    </select>
+    <select id="filterBy" style="padding:10px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;" onchange="filterDestinations()">
+      <option value="">Filter</option>
+      <option value="beach">Beach</option>
+      <option value="mountain">Mountain</option>
+      <option value="city">City</option>
+    </select>
+    <select id="sortBy" style="padding:10px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;" onchange="filterDestinations()">
+      <option value="">Sort by</option>
+      <option value="name">Name A-Z</option>
+      <option value="popular">Popular</option>
+    </select>
+  </div>
+
+  <!-- Top Regional Selections -->
+  <div class="sec-label">Top Regional Selections</div>
+  <div class="grid-5" id="regionsGrid" style="margin-bottom:26px;"></div>
+
+  <!-- Previous Trips -->
+  <div class="sec-label">Previous Trips</div>
+  <div id="prevTrips" style="margin-bottom:24px;">
+    <p style="color:#aaa;font-size:13px;text-align:center;padding:20px;">No trips yet. <a href="create-trip.html" style="color:#2563eb;">Plan your first trip!</a></p>
+  </div>
+
+  <div style="text-align:right;">
+    <a href="create-trip.html" class="btn">+ Plan a Trip</a>
+  </div>
+</div>
+
+<script>
+const REGIONS=[
+  {name:'Paris',tag:'europe',type:'city',img:'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=300&h=200&fit=crop'},
+  {name:'Bali',tag:'asia',type:'beach',img:'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=300&h=200&fit=crop'},
+  {name:'New York',tag:'americas',type:'city',img:'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=300&h=200&fit=crop'},
+  {name:'Swiss Alps',tag:'europe',type:'mountain',img:'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=300&h=200&fit=crop'},
+  {name:'Tokyo',tag:'asia',type:'city',img:'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=300&h=200&fit=crop'},
+  {name:'Maldives',tag:'asia',type:'beach',img:'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=300&h=200&fit=crop'},
+  {name:'Rome',tag:'europe',type:'city',img:'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=300&h=200&fit=crop'},
+  {name:'Machu Picchu',tag:'americas',type:'mountain',img:'https://images.unsplash.com/photo-1526392060635-9d6019884377?w=300&h=200&fit=crop'},
+  {name:'Dubai',tag:'asia',type:'city',img:'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=300&h=200&fit=crop'},
+  {name:'Santorini',tag:'europe',type:'beach',img:'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=300&h=200&fit=crop'},
+];
+
+function filterDestinations(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const grp=document.getElementById('groupBy').value;
+  const flt=document.getElementById('filterBy').value;
+  const srt=document.getElementById('sortBy').value;
+  let list=REGIONS.filter(r=>{
+    if(q&&!r.name.toLowerCase().includes(q))return false;
+    if(grp&&r.tag!==grp)return false;
+    if(flt&&r.type!==flt)return false;
+    return true;
+  });
+  if(srt==='name')list.sort((a,b)=>a.name.localeCompare(b.name));
+  renderRegions(list.slice(0,5));
+}
+
+function renderRegions(list){
+  const g=document.getElementById('regionsGrid');
+  g.innerHTML=list.map(r=>`
+    <div class="img-card" onclick="window.location.href='index.html?q=${encodeURIComponent(r.name)}'">
+      <img src="${r.img}" alt="${r.name}" style="height:110px;">
+      <div class="img-overlay">${r.name}</div>
+    </div>`).join('');
+}
+
+function loadPrevTrips(){
+  const trips=JSON.parse(localStorage.getItem('tl_trips')||'[]');
+  const completed=trips.filter(t=>t.status==='completed');
+  const el=document.getElementById('prevTrips');
+  if(!completed.length){
+    el.innerHTML='<p style="color:#aaa;font-size:13px;text-align:center;padding:20px;">No completed trips yet. <a href="create-trip.html" style="color:#2563eb;">Plan your first trip!</a></p>';
+    return;
+  }
+  el.innerHTML=`<div class="grid-3">${completed.map(t=>`
+    <div class="trip-card">
+      <div class="trip-img"><img src="${t.img||'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=300&h=120&fit=crop'}" alt="${t.place}"></div>
+      <div class="trip-body">
+        <div class="trip-name">${t.place}</div>
+        <div class="trip-meta">📅 ${t.startDate} → ${t.endDate}</div>
+        <div class="trip-actions"><a href="budget.html?id=${t.id}" class="btn btn-outline btn-sm">View</a></div>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+const user=JSON.parse(localStorage.getItem('tl_user')||'null');
+if(user){
+  const av=document.getElementById('avatarBtn');
+  if(user.photo&&user.photo.startsWith('data:')){av.innerHTML=`<img src="${user.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;}
+  else{av.textContent=(user.firstName||'U')[0].toUpperCase();}
+}
+
+renderRegions(REGIONS.slice(0,5));
+loadPrevTrips();
+</script>
+</body>
+</html>

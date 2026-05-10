@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Traveloop - Build Itinerary</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <span class="logo">✈️ Traveloop</span>
+  <div class="nav-links">
+    <a href="dashboard.html">Home</a>
+    <a href="my-trips.html">My Trips</a>
+    <a href="profile.html">Profile</a>
+    <a href="admin.html" style="color:#dc2626;font-weight:700;">Admin</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+    <div>
+      <h2 style="color:#1e40af;font-size:22px;" id="tripTitle">Build Itinerary</h2>
+      <p id="tripMeta" style="font-size:13px;color:#888;margin-top:4px;"></p>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-outline btn-sm" onclick="window.location.href='budget.html?id='+tripId">View Day Plan</button>
+      <button class="btn btn-sm" onclick="saveItinerary()">💾 Save</button>
+    </div>
+  </div>
+
+  <div id="msg" class="alert"></div>
+  <div id="sections-wrap"></div>
+
+  <button class="btn btn-outline" onclick="addSection()" style="margin-top:4px;">+ Add another Section</button>
+</div>
+
+<script>
+const params=new URLSearchParams(location.search);
+const tripId=params.get('id');
+let trip=null;
+let sectionCount=0;
+
+if(tripId){
+  const trips=JSON.parse(localStorage.getItem('tl_trips')||'[]');
+  trip=trips.find(t=>t.id===tripId);
+}
+
+if(trip){
+  document.getElementById('tripTitle').textContent='Build Itinerary: '+trip.name;
+  document.getElementById('tripMeta').textContent='📍 '+trip.place+' | 📅 '+trip.startDate+' → '+trip.endDate+(trip.budget?' | 💰 Budget: $'+trip.budget:'');
+  if(trip.sections&&trip.sections.length){
+    trip.sections.forEach(s=>addSection(s));
+  } else {
+    addSection();addSection();addSection();
+  }
+} else {
+  addSection();addSection();addSection();
+}
+
+function addSection(data){
+  sectionCount++;
+  const wrap=document.getElementById('sections-wrap');
+  const div=document.createElement('div');
+  div.className='card';
+  div.dataset.idx=sectionCount;
+  div.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <strong style="color:#1e40af;">Section ${sectionCount}:</strong>
+      <button onclick="this.closest('.card').remove()" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:18px;" title="Remove">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Section Title / Description</label>
+      <input type="text" class="sec-title" placeholder="e.g. Flight to Paris, Hotel check-in, City tour..." value="${data?data.title||'':''}">
+    </div>
+    <div style="display:flex;gap:10px;">
+      <div class="form-group" style="flex:1;">
+        <label>Date Range</label>
+        <input type="text" class="sec-date" placeholder="e.g. Jun 10 to Jun 12" value="${data?data.dateRange||'':''}">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label>Budget for this section ($)</label>
+        <input type="number" class="sec-budget" placeholder="e.g. 500" value="${data?data.budget||'':''}">
+      </div>
+    </div>`;
+  wrap.appendChild(div);
+}
+
+function saveItinerary(){
+  const cards=document.querySelectorAll('#sections-wrap .card');
+  const sections=[];
+  cards.forEach(c=>{
+    sections.push({
+      title:c.querySelector('.sec-title').value.trim(),
+      dateRange:c.querySelector('.sec-date').value.trim(),
+      budget:c.querySelector('.sec-budget').value.trim()
+    });
+  });
+  if(tripId){
+    const trips=JSON.parse(localStorage.getItem('tl_trips')||'[]');
+    const idx=trips.findIndex(t=>t.id===tripId);
+    if(idx>-1){trips[idx].sections=sections;localStorage.setItem('tl_trips',JSON.stringify(trips));}
+  }
+  const msg=document.getElementById('msg');
+  msg.className='alert alert-success';
+  msg.style.display='block';
+  msg.textContent='Itinerary saved successfully!';
+  setTimeout(()=>{msg.style.display='none';},2000);
+}
+</script>
+</body>
+</html>

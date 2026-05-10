@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Traveloop - Community</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <span class="logo">✈️ Traveloop</span>
+  <div class="nav-links">
+    <a href="dashboard.html">Home</a>
+    <a href="my-trips.html">My Trips</a>
+    <a href="community.html" class="active">Community</a>
+    <a href="profile.html">Profile</a>
+    <a href="admin.html" style="color:#dc2626;font-weight:700;">Admin</a>
+  </div>
+</nav>
+
+<div class="toolbar">
+  <input type="text" id="searchInput" placeholder="Search posts..." oninput="renderPosts()">
+  <select id="groupBy" onchange="renderPosts()">
+    <option value="">Group by</option>
+    <option value="beach">Beach</option>
+    <option value="mountain">Mountain</option>
+    <option value="city">City</option>
+  </select>
+  <select id="filterBy" onchange="renderPosts()">
+    <option value="">Filter</option>
+    <option value="popular">Most Liked</option>
+    <option value="recent">Recent</option>
+  </select>
+  <select id="sortBy" onchange="renderPosts()">
+    <option value="">Sort by</option>
+    <option value="likes">Likes</option>
+    <option value="date">Date</option>
+  </select>
+</div>
+
+<div class="page-wide" style="display:flex;gap:24px;align-items:flex-start;">
+  <!-- Feed -->
+  <div style="flex:1;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div class="sec-label" style="margin-top:0;">Community tab</div>
+      <button class="btn btn-sm" onclick="openPostModal()">+ Share Experience</button>
+    </div>
+    <div id="posts-list"></div>
+  </div>
+
+  <!-- Sidebar -->
+  <div style="width:260px;flex-shrink:0;">
+    <div class="card" style="font-size:13px;color:#555;line-height:1.8;">
+      <strong style="color:#1e40af;">About Community</strong>
+      <p style="margin-top:8px;">Share your travel experiences, tips, and photos with fellow travelers around the world.</p>
+      <p style="margin-top:8px;">Use Search, Group by, Filter and Sort to find posts you're interested in.</p>
+    </div>
+    <div class="card" style="margin-top:0;">
+      <div class="sec-label" style="margin-top:0;">Top Destinations</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;gap:10px;align-items:center;cursor:pointer;" onclick="document.getElementById('searchInput').value='Paris';renderPosts()">
+          <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=50&h=40&fit=crop" style="width:44px;height:36px;border-radius:6px;object-fit:cover;">
+          <span style="font-size:13px;font-weight:600;">Paris</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;cursor:pointer;" onclick="document.getElementById('searchInput').value='Bali';renderPosts()">
+          <img src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=50&h=40&fit=crop" style="width:44px;height:36px;border-radius:6px;object-fit:cover;">
+          <span style="font-size:13px;font-weight:600;">Bali</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;cursor:pointer;" onclick="document.getElementById('searchInput').value='Tokyo';renderPosts()">
+          <img src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=50&h=40&fit=crop" style="width:44px;height:36px;border-radius:6px;object-fit:cover;">
+          <span style="font-size:13px;font-weight:600;">Tokyo</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Post Modal -->
+<div class="modal-overlay" id="postModal">
+  <div class="modal">
+    <button class="close-btn" onclick="closePostModal()">✕</button>
+    <h3>📸 Share Your Experience</h3>
+    <div class="form-group"><label>Title</label><input type="text" id="postTitle" placeholder="e.g. Amazing trip to Paris!"></div>
+    <div class="form-group"><label>Description</label><textarea id="postDesc" rows="3" placeholder="Tell us about your experience..."></textarea></div>
+    <div class="form-group"><label>Destination</label><input type="text" id="postDest" placeholder="e.g. Paris, France"></div>
+    <div class="form-group"><label>Category</label>
+      <select id="postCat"><option value="city">City</option><option value="beach">Beach</option><option value="mountain">Mountain</option></select>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-outline btn-sm" onclick="closePostModal()">Cancel</button>
+      <button class="btn btn-sm" onclick="submitPost()">Share Post</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SAMPLE_IMGS={
+  city:['https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&h=300&fit=crop','https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&h=300&fit=crop','https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&h=300&fit=crop'],
+  beach:['https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&h=300&fit=crop','https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=600&h=300&fit=crop','https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=600&h=300&fit=crop'],
+  mountain:['https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=600&h=300&fit=crop','https://images.unsplash.com/photo-1526392060635-9d6019884377?w=600&h=300&fit=crop'],
+};
+
+const DEFAULT_POSTS=[
+  {id:'p1',title:'Magical Paris in Spring 🌸',desc:'Visited the Eiffel Tower at sunset — absolutely breathtaking! The city of love lives up to its name.',dest:'Paris, France',cat:'city',img:SAMPLE_IMGS.city[0],likes:42,date:'2025-04-10',author:'Sarah M.'},
+  {id:'p2',title:'Bali Bliss 🌊',desc:'Spent 10 days in Bali and it was the best decision of my life. The beaches, the food, the people!',dest:'Bali, Indonesia',cat:'beach',img:SAMPLE_IMGS.beach[0],likes:87,date:'2025-03-22',author:'James K.'},
+  {id:'p3',title:'Swiss Alps Adventure ⛰️',desc:'Paragliding over the Alps was the most thrilling experience. Highly recommend for adventure seekers!',dest:'Swiss Alps',cat:'mountain',img:SAMPLE_IMGS.mountain[0],likes:56,date:'2025-02-15',author:'Priya R.'},
+  {id:'p4',title:'Tokyo Food Tour 🍜',desc:'The ramen, sushi, and street food in Tokyo is on another level. A foodie\'s paradise!',dest:'Tokyo, Japan',cat:'city',img:SAMPLE_IMGS.city[2],likes:73,date:'2025-01-30',author:'Mike T.'},
+];
+
+function getPosts(){
+  const saved=JSON.parse(localStorage.getItem('tl_posts')||'null');
+  return saved||DEFAULT_POSTS.map(p=>({...p}));
+}
+
+function savePosts(posts){localStorage.setItem('tl_posts',JSON.stringify(posts));}
+
+function renderPosts(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const grp=document.getElementById('groupBy').value;
+  const flt=document.getElementById('filterBy').value;
+  const srt=document.getElementById('sortBy').value;
+  let posts=getPosts();
+  if(q)posts=posts.filter(p=>p.title.toLowerCase().includes(q)||p.dest.toLowerCase().includes(q)||p.desc.toLowerCase().includes(q));
+  if(grp)posts=posts.filter(p=>p.cat===grp);
+  if(srt==='likes')posts.sort((a,b)=>b.likes-a.likes);
+  if(srt==='date')posts.sort((a,b)=>b.date>a.date?1:-1);
+  const liked=JSON.parse(localStorage.getItem('tl_liked')||'[]');
+  document.getElementById('posts-list').innerHTML=posts.length?posts.map(p=>`
+    <div class="post-card">
+      <div class="post-img"><img src="${p.img}" alt="${p.title}"></div>
+      <div class="post-body">
+        <div class="post-title">${p.title}</div>
+        <div class="post-meta">📍 ${p.dest} &nbsp;|&nbsp; 👤 ${p.author} &nbsp;|&nbsp; 📅 ${p.date}</div>
+        <p style="font-size:13px;color:#555;margin-bottom:10px;line-height:1.6;">${p.desc}</p>
+        <div class="post-actions">
+          <button onclick="likePost('${p.id}')" style="color:${liked.includes(p.id)?'#ef4444':'#6b7280'};">
+            ${liked.includes(p.id)?'❤️':'🤍'} ${p.likes}
+          </button>
+          <button>💬 Comment</button>
+          <button onclick="sharePost('${p.title}')">&#128279; Share</button>
+          <span class="badge badge-blue" style="margin-left:auto;">${p.cat}</span>
+        </div>
+      </div>
+    </div>`).join(''):'<p style="color:#bbb;text-align:center;padding:30px;">No posts found.</p>';
+}
+
+function likePost(id){
+  const posts=getPosts();
+  const liked=JSON.parse(localStorage.getItem('tl_liked')||'[]');
+  const idx=posts.findIndex(p=>p.id===id);
+  if(idx>-1){
+    if(liked.includes(id)){posts[idx].likes--;liked.splice(liked.indexOf(id),1);}
+    else{posts[idx].likes++;liked.push(id);}
+    savePosts(posts);localStorage.setItem('tl_liked',JSON.stringify(liked));renderPosts();
+  }
+}
+
+function sharePost(title){
+  if(navigator.clipboard){navigator.clipboard.writeText(window.location.href);alert('Link copied! Share: '+title);}
+}
+
+function openPostModal(){document.getElementById('postModal').classList.add('open');}
+function closePostModal(){document.getElementById('postModal').classList.remove('open');}
+
+function submitPost(){
+  const title=document.getElementById('postTitle').value.trim();
+  const desc=document.getElementById('postDesc').value.trim();
+  const dest=document.getElementById('postDest').value.trim();
+  const cat=document.getElementById('postCat').value;
+  if(!title||!desc||!dest){alert('Please fill in all fields.');return;}
+  const user=JSON.parse(localStorage.getItem('tl_user')||'{}');
+  const imgs=SAMPLE_IMGS[cat]||SAMPLE_IMGS.city;
+  const img=imgs[Math.floor(Math.random()*imgs.length)];
+  const posts=getPosts();
+  posts.unshift({id:'p'+Date.now(),title,desc,dest,cat,img,likes:0,date:new Date().toISOString().split('T')[0],author:(user.firstName||'Anonymous')+' '+(user.lastName||'').trim()});
+  savePosts(posts);
+  document.getElementById('postTitle').value='';
+  document.getElementById('postDesc').value='';
+  document.getElementById('postDest').value='';
+  closePostModal();
+  renderPosts();
+}
+
+renderPosts();
+</script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Traveloop - Day Plan</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <span class="logo">✈️ Traveloop</span>
+  <div class="nav-links">
+    <a href="dashboard.html">Home</a>
+    <a href="my-trips.html">My Trips</a>
+    <a href="admin.html" style="color:#dc2626;font-weight:700;">Admin</a>
+  </div>
+</nav>
+
+<div class="toolbar">
+  <input type="text" id="searchInput" placeholder="Search activities..." oninput="filterActivities()">
+  <select id="groupBy"><option value="">Group by</option><option value="day">Day</option></select>
+  <select id="filterBy"><option value="">Filter</option></select>
+  <select id="sortBy"><option value="">Sort by</option></select>
+</div>
+
+<div class="page">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div>
+      <h2 style="color:#1e40af;" id="tripTitle">Day Plan</h2>
+      <p id="tripMeta" style="font-size:13px;color:#888;margin-top:3px;"></p>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-outline btn-sm" onclick="addDay()">+ Add Day</button>
+      <button class="btn btn-sm" onclick="savePlan()">💾 Save Plan</button>
+    </div>
+  </div>
+
+  <!-- Budget summary -->
+  <div class="card" style="display:flex;gap:20px;align-items:center;padding:14px 18px;margin-bottom:20px;background:linear-gradient(135deg,#eff6ff,#dbeafe);">
+    <div style="text-align:center;">
+      <div style="font-size:22px;font-weight:800;color:#1e40af;" id="totalBudget">$0</div>
+      <div style="font-size:11px;color:#888;">Total Budget</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:22px;font-weight:800;color:#16a34a;" id="spentBudget">$0</div>
+      <div style="font-size:11px;color:#888;">Planned Spend</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:22px;font-weight:800;" id="remainBudget" style="color:#dc2626;">$0</div>
+      <div style="font-size:11px;color:#888;">Remaining</div>
+    </div>
+    <div style="flex:1;">
+      <div style="font-size:12px;color:#888;margin-bottom:4px;">Budget used</div>
+      <div class="prog-wrap" style="margin-bottom:0;"><div class="prog-fill" id="budgetBar" style="width:0%;background:#16a34a;"></div></div>
+    </div>
+  </div>
+
+  <div id="msg" class="alert"></div>
+  <div id="days-wrap"></div>
+</div>
+
+<script>
+const params=new URLSearchParams(location.search);
+const tripId=params.get('id');
+let trip=null;
+let dayCount=0;
+
+if(tripId){
+  const trips=JSON.parse(localStorage.getItem('tl_trips')||'[]');
+  trip=trips.find(t=>t.id===tripId);
+}
+
+if(trip){
+  document.getElementById('tripTitle').textContent='Day Plan: '+trip.name;
+  document.getElementById('tripMeta').textContent='📍 '+trip.place+' | 📅 '+trip.startDate+' → '+trip.endDate;
+  document.getElementById('totalBudget').textContent='$'+(trip.budget||0);
+  if(trip.itinerary&&trip.itinerary.length){
+    trip.itinerary.forEach(d=>addDay(d));
+  } else {
+    addDay();addDay();
+  }
+} else {
+  addDay();addDay();
+}
+
+function addDay(data){
+  dayCount++;
+  const wrap=document.getElementById('days-wrap');
+  if(dayCount>1){const hr=document.createElement('hr');hr.className='divider';wrap.appendChild(hr);}
+  const div=document.createElement('div');
+  div.dataset.day=dayCount;
+  const acts=data&&data.activities?data.activities:[{place:'',budget:''}];
+  div.innerHTML=`
+    <div class="day-tag">Day ${dayCount}</div>
+    <div class="acts-wrap">
+      ${acts.map((a,i)=>`
+        ${i>0?'<div class="arrow-down">↓</div>':''}
+        <div class="act-row">
+          <input type="text" class="act-place" placeholder="Activity / Place" value="${a.place||''}">
+          <input type="number" class="bud act-bud" placeholder="$ Budget" value="${a.budget||''}" oninput="updateBudgetSummary()">
+          <button onclick="removeAct(this)" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:16px;" title="Remove">✕</button>
+        </div>`).join('')}
+    </div>
+    <button onclick="addAct(this)" class="btn btn-outline btn-sm" style="margin-top:6px;margin-bottom:4px;">+ Add Activity</button>`;
+  wrap.appendChild(div);
+  updateBudgetSummary();
+}
+
+function addAct(btn){
+  const wrap=btn.previousElementSibling;
+  const arrow=document.createElement('div');arrow.className='arrow-down';arrow.textContent='↓';
+  const row=document.createElement('div');row.className='act-row';
+  row.innerHTML=`<input type="text" class="act-place" placeholder="Activity / Place">
+    <input type="number" class="bud act-bud" placeholder="$ Budget" oninput="updateBudgetSummary()">
+    <button onclick="removeAct(this)" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:16px;">✕</button>`;
+  wrap.appendChild(arrow);wrap.appendChild(row);
+  updateBudgetSummary();
+}
+
+function removeAct(btn){
+  const row=btn.closest('.act-row');
+  const prev=row.previousElementSibling;
+  if(prev&&prev.classList.contains('arrow-down'))prev.remove();
+  row.remove();updateBudgetSummary();
+}
+
+function updateBudgetSummary(){
+  const buds=document.querySelectorAll('.act-bud');
+  let total=0;
+  buds.forEach(b=>{if(b.value)total+=parseFloat(b.value)||0;});
+  const tripBudget=parseFloat(trip&&trip.budget||0);
+  document.getElementById('spentBudget').textContent='$'+total.toFixed(0);
+  const remain=tripBudget-total;
+  const remEl=document.getElementById('remainBudget');
+  remEl.textContent='$'+remain.toFixed(0);
+  remEl.style.color=remain<0?'#dc2626':'#16a34a';
+  const pct=tripBudget>0?Math.min(100,(total/tripBudget)*100):0;
+  document.getElementById('budgetBar').style.width=pct+'%';
+  document.getElementById('budgetBar').style.background=pct>100?'#dc2626':'#16a34a';
+}
+
+function filterActivities(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  document.querySelectorAll('.act-place').forEach(inp=>{
+    const row=inp.closest('.act-row');
+    row.style.opacity=(!q||inp.value.toLowerCase().includes(q))?'1':'0.3';
+  });
+}
+
+function savePlan(){
+  const dayDivs=document.querySelectorAll('#days-wrap [data-day]');
+  const itinerary=[];
+  dayDivs.forEach(d=>{
+    const activities=[];
+    d.querySelectorAll('.act-row').forEach(r=>{
+      const place=r.querySelector('.act-place').value.trim();
+      const budget=r.querySelector('.act-bud').value.trim();
+      if(place)activities.push({place,budget});
+    });
+    itinerary.push({day:d.dataset.day,activities});
+  });
+  if(tripId){
+    const trips=JSON.parse(localStorage.getItem('tl_trips')||'[]');
+    const idx=trips.findIndex(t=>t.id===tripId);
+    if(idx>-1){trips[idx].itinerary=itinerary;localStorage.setItem('tl_trips',JSON.stringify(trips));}
+  }
+  const msg=document.getElementById('msg');
+  msg.className='alert alert-success';msg.style.display='block';msg.textContent='Day plan saved!';
+  setTimeout(()=>msg.style.display='none',2000);
+}
+</script>
+</body>
+</html>

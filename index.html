@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Traveloop - Search</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <span class="logo">✈️ Traveloop</span>
+  <div class="nav-links">
+    <a href="dashboard.html">Home</a>
+    <a href="my-trips.html">My Trips</a>
+    <a href="profile.html">Profile</a>
+    <a href="admin.html" style="color:#dc2626;font-weight:700;">Admin</a>
+  </div>
+</nav>
+
+<div class="toolbar">
+  <input type="text" id="searchInput" placeholder="Search destinations, activities..." oninput="doSearch()">
+  <select id="groupBy" onchange="doSearch()">
+    <option value="">Group by</option>
+    <option value="asia">Asia</option>
+    <option value="europe">Europe</option>
+    <option value="americas">Americas</option>
+  </select>
+  <select id="filterBy" onchange="doSearch()">
+    <option value="">Filter</option>
+    <option value="beach">Beach</option>
+    <option value="mountain">Mountain</option>
+    <option value="city">City</option>
+    <option value="activity">Activity</option>
+  </select>
+  <select id="sortBy" onchange="doSearch()">
+    <option value="">Sort by</option>
+    <option value="name">Name A-Z</option>
+    <option value="rating">Rating</option>
+  </select>
+</div>
+
+<div class="page">
+  <div class="sec-label" style="margin-top:0;" id="resultsLabel">All Destinations & Activities</div>
+  <div id="results"></div>
+</div>
+
+<script>
+const DATA=[
+  {name:'Eiffel Tower',desc:'Iconic iron lattice tower in Paris, France. Must-visit landmark.',tag:'europe',type:'city',rating:4.9,img:'https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=200&h=120&fit=crop'},
+  {name:'Bali Beaches',desc:'Stunning tropical beaches with crystal clear water and vibrant culture.',tag:'asia',type:'beach',rating:4.8,img:'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=200&h=120&fit=crop'},
+  {name:'Paragliding in Swiss Alps',desc:'Thrilling paragliding experience over the breathtaking Swiss Alps.',tag:'europe',type:'activity',rating:4.7,img:'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=200&h=120&fit=crop'},
+  {name:'Tokyo Street Food Tour',desc:'Explore the vibrant street food scene of Tokyo, Japan.',tag:'asia',type:'activity',rating:4.8,img:'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=200&h=120&fit=crop'},
+  {name:'Colosseum, Rome',desc:'Ancient amphitheater in the heart of Rome, Italy.',tag:'europe',type:'city',rating:4.7,img:'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=200&h=120&fit=crop'},
+  {name:'Santorini Sunset',desc:'Watch the world-famous sunset from Oia, Santorini, Greece.',tag:'europe',type:'beach',rating:4.9,img:'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=200&h=120&fit=crop'},
+  {name:'Machu Picchu Trek',desc:'Hike the Inca Trail to the ancient citadel of Machu Picchu.',tag:'americas',type:'mountain',rating:4.9,img:'https://images.unsplash.com/photo-1526392060635-9d6019884377?w=200&h=120&fit=crop'},
+  {name:'Dubai Desert Safari',desc:'Experience the thrill of dune bashing and camel riding in Dubai.',tag:'asia',type:'activity',rating:4.6,img:'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=200&h=120&fit=crop'},
+  {name:'Maldives Snorkeling',desc:'Snorkel in the crystal clear waters of the Maldives.',tag:'asia',type:'beach',rating:4.9,img:'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=200&h=120&fit=crop'},
+  {name:'New York City Tour',desc:'Explore the Big Apple — Times Square, Central Park, and more.',tag:'americas',type:'city',rating:4.7,img:'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=200&h=120&fit=crop'},
+  {name:'Amazon Rainforest',desc:'Explore the world\'s largest tropical rainforest in Brazil.',tag:'americas',type:'mountain',rating:4.6,img:'https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=200&h=120&fit=crop'},
+  {name:'Northern Lights, Iceland',desc:'Witness the magical Aurora Borealis in Iceland.',tag:'europe',type:'activity',rating:5.0,img:'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=200&h=120&fit=crop'},
+];
+
+// Pre-fill from URL
+const params=new URLSearchParams(location.search);
+const q=params.get('q');
+if(q)document.getElementById('searchInput').value=q;
+
+function doSearch(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const grp=document.getElementById('groupBy').value;
+  const flt=document.getElementById('filterBy').value;
+  const srt=document.getElementById('sortBy').value;
+  let list=DATA.filter(d=>{
+    if(q&&!d.name.toLowerCase().includes(q)&&!d.desc.toLowerCase().includes(q))return false;
+    if(grp&&d.tag!==grp)return false;
+    if(flt&&d.type!==flt)return false;
+    return true;
+  });
+  if(srt==='name')list.sort((a,b)=>a.name.localeCompare(b.name));
+  if(srt==='rating')list.sort((a,b)=>b.rating-a.rating);
+  document.getElementById('resultsLabel').textContent=`Results (${list.length})`;
+  document.getElementById('results').innerHTML=list.length?list.map(d=>`
+    <div class="result-item">
+      <div class="result-img"><img src="${d.img}" alt="${d.name}"></div>
+      <div class="result-info">
+        <div class="result-name">${d.name}</div>
+        <div class="result-desc">${d.desc}</div>
+        <div style="margin-top:6px;display:flex;gap:8px;align-items:center;">
+          <span class="badge badge-blue">${d.type}</span>
+          <span class="badge badge-yellow">${d.tag}</span>
+          <span style="font-size:12px;color:#f59e0b;">★ ${d.rating}</span>
+        </div>
+      </div>
+      <a href="create-trip.html" class="btn btn-outline btn-sm" style="flex-shrink:0;">Plan Trip</a>
+    </div>`).join(''):'<p style="color:#bbb;text-align:center;padding:30px;">No results found.</p>';
+}
+
+doSearch();
+</script>
+</body>
+</html>
